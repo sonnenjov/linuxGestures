@@ -15,10 +15,8 @@ int initial_volume = -1;
 static struct timespec last_set_time = {0, 0};
 
 int get_volume() {
-    // Get current volume from pactl (simplified)
-    // Returns volume in percentage (0-100)
     FILE *fp = popen("pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\\d+%' | head -1", "r");
-    if (!fp) return 50; // default fallback
+    if (!fp) return 50; 
 
     char buf[10];
     if (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -26,11 +24,10 @@ int get_volume() {
         return atoi(buf);
     }
     pclose(fp);
-    return 50; // fallback
+    return 50; 
 }
 
 void set_volume(int vol) {
-    // Clamp volume 0-100
     if (vol < 0) vol = 0;
     if (vol > 100) vol = 100;
 
@@ -39,7 +36,6 @@ void set_volume(int vol) {
     system(cmd);
 }
 
-// --- libinput interface (required) ---
 static int open_restricted(const char *path, int flags, void *user_data) {
     int fd = open(path, flags);
     if (fd < 0) {
@@ -62,7 +58,7 @@ void handle_gesture_event(struct libinput_event_gesture *gesture, enum libinput_
 
     static double accumulated_dy = 0;
     static double accumulated_dx = 0;
-    static int initial_volume = 50;  // or fetched at SWIPE_BEGIN
+    static int initial_volume = 50;  
      struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
     long elapsed_ms = (now.tv_sec - last_set_time.tv_sec) * 1000
@@ -73,7 +69,7 @@ void handle_gesture_event(struct libinput_event_gesture *gesture, enum libinput_
 
     if (type == LIBINPUT_EVENT_GESTURE_SWIPE_BEGIN && current_finger_count == 4) {
         accumulated_dy = 0;
-        initial_volume = get_volume();  // get current system volume at start
+        initial_volume = get_volume(); 
         printf("Swipe begin, initial volume: %d%%\n", initial_volume);
     }
     else if (type == LIBINPUT_EVENT_GESTURE_SWIPE_UPDATE && current_finger_count == 4) {
@@ -147,7 +143,6 @@ void handle_gesture_event(struct libinput_event_gesture *gesture, enum libinput_
                                     accumulated_dx = 0;
     }
 }
-// --- handle gestures ---
 void handle_event(struct libinput_event *event) {
     enum libinput_event_type type = libinput_event_get_type(event);
 
@@ -164,7 +159,6 @@ void handle_event(struct libinput_event *event) {
     libinput_event_destroy(event);
 }
 
-// --- main loop ---
 int main() {
     struct udev *udev = udev_new();
     if (!udev) {
